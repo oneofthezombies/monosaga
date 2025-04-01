@@ -1,0 +1,21 @@
+{
+  "name": "@monosaga/cli",
+  "type": "module",
+  "bin": {
+    "monosaga": "dist/bin/monosaga.js"
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "tsup": {
+    "dts": true,
+    "entry": [
+      "src/bin/monosaga.ts"
+    ],
+    "format": "esm",
+    "clean": true
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  }
+}

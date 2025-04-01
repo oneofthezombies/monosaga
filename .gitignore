@@ -1,0 +1,19 @@
+# JavaScript
+node_modules/
+package-lock.json
+
+# macOS
+.DS_Store
+
+# Build files
+dist/
+
+# dotenv
+.env*
+!.env.example
+
+# temp files
+/temp/
+
+# VSCode configs
+/.vscode/

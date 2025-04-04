@@ -7,6 +7,14 @@
   "scripts": {
     "build": "tsup"
   },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "dotenv": "^16.4.7",
+    "pg": "^8.14.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.11"
+  },
   "tsup": {
     "dts": true,
     "entry": [
@@ -14,8 +22,5 @@
     ],
     "format": "esm",
     "clean": true
-  },
-  "dependencies": {
-    "dotenv": "^16.4.7"
   }
 }

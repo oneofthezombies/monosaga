@@ -1,9 +1,9 @@
 import { Pool } from '@monosaga/pg';
+import m0001Init from './migrations/0001-init';
 import { type Migration } from './utils';
-// import m0001Init from './migrations/0001-init';
 
 const migrations: Migration[] = [
-  // m0001Init,
+  m0001Init,
 ];
 
 export async function migrate(): Promise<void> {
@@ -41,7 +41,6 @@ async function migrateInternal(pool: Pool): Promise<void> {
       }
 
       await migration.up(sql);
-
       await sql`
         INSERT INTO _monosaga_migrations
           (name)

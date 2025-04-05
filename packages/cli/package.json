@@ -9,7 +9,7 @@
     "build": "tsup"
   },
   "dependencies": {
-    "@monosaga/core": "*",
+    "@monosaga/utils": "*",
     "@monosaga/pg": "*",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7"

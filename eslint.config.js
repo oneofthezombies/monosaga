@@ -3,6 +3,9 @@ import stylistic from '@stylistic/eslint-plugin';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
+  {
+    ignores: ['**/dist/**/*'],
+  },
   stylistic.configs.customize({
     indent: 2,
     quotes: 'single',
@@ -11,7 +14,6 @@ export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   {
-    ignores: ['**/*/dist/'],
     rules: {
       '@stylistic/brace-style': ['error', '1tbs'],
     },

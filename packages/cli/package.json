@@ -6,12 +6,12 @@
     "monosaga": "dist/monosaga.js"
   },
   "scripts": {
-    "build": "tsup --dts",
-    "build:dev": "tsup --sourcemap --onSuccess \"tsc --emitDeclarationOnly --declaration\""
+    "build": "tsup --format esm --dts",
+    "build:dev": "tsup --format esm --sourcemap --onSuccess tsc"
   },
   "dependencies": {
-    "@monosaga/utils": "*",
     "@monosaga/pg": "*",
+    "@monosaga/utils": "*",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7"
   },

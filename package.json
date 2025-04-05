@@ -6,6 +6,7 @@
   ],
   "scripts": {
     "build": "turbo build",
+    "build:dev": "turbo build:dev",
     "sort-package-json": "sort-package-json package.json **/*/package.json"
   },
   "devDependencies": {

@@ -16,16 +16,12 @@
     }
   },
   "scripts": {
-    "build": "tsup --dts",
-    "build:dev": "tsup --sourcemap --onSuccess \"tsc --emitDeclarationOnly --declaration\""
+    "build": "tsup --format cjs,esm --dts",
+    "build:dev": "tsup --format esm --sourcemap --onSuccess tsc"
   },
   "tsup": {
     "entry": [
       "src/index.ts"
-    ],
-    "format": [
-      "esm",
-      "cjs"
     ],
     "clean": true
   }

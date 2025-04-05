@@ -15,8 +15,7 @@
   },
   "devDependencies": {
     "@types/commander": "^2.12.0",
-    "@types/pg": "^8.11.11",
-    "tsx": "^4.19.3"
+    "@types/pg": "^8.11.11"
   },
   "tsup": {
     "dts": true,

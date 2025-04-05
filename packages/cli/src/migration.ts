@@ -1,5 +1,4 @@
-import { transaction } from '@monosaga/pg';
-import pg, { type Pool } from 'pg';
+import { Pool } from '@monosaga/pg';
 import { type Migration } from './utils';
 // import m0001Init from './migrations/0001-init';
 
@@ -13,7 +12,7 @@ export async function migrate(): Promise<void> {
     throw new Error('Please set DATABASE_URL environment variable.');
   }
 
-  const pool = new pg.Pool({
+  const pool = new Pool({
     connectionString: databaseUrl,
   });
   try {
@@ -24,35 +23,34 @@ export async function migrate(): Promise<void> {
 }
 
 async function migrateInternal(pool: Pool): Promise<void> {
-  await transaction(pool, async (tx) => {
-    await tx.query(/* sql */`
+  await pool.transaction(async (sql) => {
+    await sql`
       CREATE TABLE IF NOT EXISTS _monosaga_migrations (
         id serial PRIMARY KEY,
         name text NOT NULL UNIQUE,
         executed_at timestamptz NOT NULL DEFAULT now()
       );
-    `);
-
-    const applieds = await tx.query(/* sql */`
+    `;
+    const applieds = await sql`
       SELECT
         name
       FROM
         _monosaga_migrations
-    `);
-    const appliedNameSet = new Set(applieds.rows.map(r => r.name));
+    `;
+    const appliedNameSet = new Set<string>(applieds.rows.map(r => r['name']));
     for (const migration of migrations) {
       if (appliedNameSet.has(migration.name)) {
         continue;
       }
 
-      await migration.up(tx);
+      await migration.up(sql);
 
-      await tx.query(/* sql */`
+      await sql`
         INSERT INTO _monosaga_migrations
           (name)
         VALUES
           (${migration.name})
-      `);
+      `;
     }
   });
 }

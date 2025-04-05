@@ -17,7 +17,11 @@
     "build": "tsup"
   },
   "dependencies": {
-    "@monosaga/core": "*"
+    "@monosaga/core": "*",
+    "pg": "^8.14.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.11"
   },
   "tsup": {
     "dts": true,

@@ -1,11 +1,9 @@
-import type { PoolClient } from 'pg';
+import type { TransactionSql } from '@monosaga/pg';
 import type { Migration } from '../utils';
 
 export default {
   name: '0001-init',
-  up: async (tx: PoolClient) => {
-    tx.query(/* sql */`
-      
-    `);
+  up: async (sql: TransactionSql) => {
+
   },
 } satisfies Migration;

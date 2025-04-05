@@ -32,10 +32,7 @@ async function migrateInternal(pool: Pool): Promise<void> {
       );
     `;
     const applieds = await sql`
-      SELECT
-        name
-      FROM
-        _monosaga_migrations
+      SELECT name FROM _monosaga_migrations;
     `;
     const appliedNameSet = new Set<string>(applieds.rows.map(r => r['name']));
     for (const migration of migrations) {
@@ -49,7 +46,7 @@ async function migrateInternal(pool: Pool): Promise<void> {
         INSERT INTO _monosaga_migrations
           (name)
         VALUES
-          (${migration.name})
+          (${migration.name});
       `;
     }
   });

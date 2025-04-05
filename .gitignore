@@ -17,3 +17,6 @@ dist/
 
 # VSCode configs
 /.vscode/
+
+# Turbo
+.turbo/

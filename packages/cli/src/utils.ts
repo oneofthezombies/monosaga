@@ -1,6 +1,5 @@
+import type { MaybePromise } from '@monosaga/core';
 import type { Pool, PoolClient } from 'pg';
-
-export type MaybePromise<T> = Promise<T> | T;
 
 export type Migration = {
   name: string;

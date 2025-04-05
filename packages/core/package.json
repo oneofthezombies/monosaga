@@ -1,5 +1,7 @@
 {
-  "name": "@monosaga/monosaga",
+  "name": "@monosaga/core",
+  "version": "0.1.0",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -15,9 +17,6 @@
   },
   "scripts": {
     "build": "tsup"
-  },
-  "dependencies": {
-    "@monosaga/core": "*"
   },
   "tsup": {
     "dts": true,

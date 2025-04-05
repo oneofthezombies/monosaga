@@ -1,5 +1,6 @@
+import { transaction } from '@monosaga/pg';
 import pg, { type Pool } from 'pg';
-import { transaction, type Migration } from './utils';
+import { type Migration } from './utils';
 // import m0001Init from './migrations/0001-init';
 
 const migrations: Migration[] = [

@@ -17,8 +17,8 @@
     "build": "tsup"
   },
   "dependencies": {
-    "@monosaga/core": "*",
-    "@monosaga/pg": "*"
+    "@monosaga/pg": "*",
+    "@monosaga/utils": "*"
   },
   "tsup": {
     "dts": true,

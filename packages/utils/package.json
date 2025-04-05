@@ -1,6 +1,6 @@
 {
-  "name": "@monosaga/core",
-  "version": "0.1.0",
+  "name": "@monosaga/utils",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {

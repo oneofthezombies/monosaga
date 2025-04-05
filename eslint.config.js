@@ -12,5 +12,8 @@ export default tseslint.config(
   tseslint.configs.recommended,
   {
     ignores: ['**/*/dist/'],
+    rules: {
+      '@stylistic/brace-style': ['error', '1tbs'],
+    },
   },
 );

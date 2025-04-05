@@ -16,7 +16,8 @@
     }
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup --dts",
+    "build:dev": "tsup --sourcemap --onSuccess \"tsc --emitDeclarationOnly --declaration\""
   },
   "dependencies": {
     "@monosaga/utils": "*",
@@ -26,7 +27,6 @@
     "@types/pg": "^8.11.11"
   },
   "tsup": {
-    "dts": true,
     "entry": [
       "src/index.ts"
     ],

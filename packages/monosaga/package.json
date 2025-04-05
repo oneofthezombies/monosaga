@@ -14,14 +14,14 @@
     }
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup --dts",
+    "build:dev": "tsup --sourcemap --onSuccess \"tsc --emitDeclarationOnly --declaration\""
   },
   "dependencies": {
     "@monosaga/pg": "*",
     "@monosaga/utils": "*"
   },
   "tsup": {
-    "dts": true,
     "entry": [
       "src/index.ts"
     ],

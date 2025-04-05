@@ -16,10 +16,10 @@
     }
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup --dts",
+    "build:dev": "tsup --sourcemap --onSuccess \"tsc --emitDeclarationOnly --declaration\""
   },
   "tsup": {
-    "dts": true,
     "entry": [
       "src/index.ts"
     ],

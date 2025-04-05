@@ -1,5 +1,7 @@
 {
-  "name": "@monosaga/monosaga",
+  "name": "@monosaga/pg",
+  "version": "0.1.0",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -17,8 +19,10 @@
     "build": "tsup"
   },
   "dependencies": {
-    "@monosaga/core": "*",
-    "@monosaga/pg": "*"
+    "pg": "^8.14.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.11"
   },
   "tsup": {
     "dts": true,

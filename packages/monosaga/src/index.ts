@@ -1,6 +1,9 @@
-import { Pool, type pg } from '@monosaga/pg';
+import {
+  Pool, type pg,
+} from '@monosaga/pg';
 import type { MaybePromise } from '@monosaga/utils';
 import { sql } from '@ts-safeql/sql-tag';
+import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 
 export type SagaConfig = {
@@ -42,6 +45,8 @@ export type OnCompensateOutOfTxContext = {
 
 export type StepOutput = Record<string, unknown>;
 
+test();
+
 export async function test() {
   const saga: SagaConfig = {
     name: 'create-user',
@@ -56,9 +61,7 @@ export async function test() {
           const idempotencyKey = Reflect.get(c.input, 'idempotencyKey') as string | undefined;
           if (!idempotencyKey) throw new Error();
           console.log('call paddle customers create api', emailEncrypted, idempotencyKey);
-          const customer = {
-            id: '<paddle-customer-id>',
-          };
+          const customer = { id: '<paddle-customer-id>' };
           return {
             emailEncrypted,
             passwordHash,
@@ -88,9 +91,7 @@ export async function test() {
             VALUES
               (${emailEncrypted}, ${emailHash}, ${passwordHash});
           `);
-          return {
-            userId: result.rows[0]?.id,
-          };
+          return { userId: result.rows[0]?.id };
         },
         async onCompensate(c) {
           const userId = Reflect.get(c.output, 'userId') as number | undefined;
@@ -104,17 +105,30 @@ export async function test() {
     ],
   };
 
-  const pool = new Pool({
-    connectionString: process.env['DATABASE_URL']!,
-  });
-  await pool.transaction((tx) => {
+  const pool = new Pool({ connectionString: process.env['DATABASE_URL']! });
+  await pool.transaction(async (tx) => {
     const uuid: string = randomUUID();
     const idempotencyKey: string = randomUUID();
-    tx.query(sql`
+    const saga = await tx.query<{
+      id: string;
+      idempotency_key: string;
+      input: unknown;
+      output: unknown;
+      step_index: number;
+      step_name: string;
+      timeout_ms: number;
+      created_at: Date;
+      updated_at: Date;
+    }>(sql`
+      SELECT * FROM _monosaga_sagas WHERE idempotency_key = ${'a1acc725-46c8-411e-ab28-9b8781899331'}::uuid;
+    `);
+    const saga2 = saga.rows[0];
+    console.log(saga2);
+    await tx.query(sql`
       INSERT INTO _monosaga_sagas
-        (id, idempotency_key)
+        (id, idempotency_key, step_name)
       VALUES
-        (${uuid}::uuid, ${idempotencyKey}::uuid);
+        (${uuid}::uuid, ${idempotencyKey}::uuid, ${'test'});
     `);
   });
 }

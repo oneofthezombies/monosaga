@@ -21,6 +21,9 @@
     "@monosaga/pg": "*",
     "@monosaga/utils": "*"
   },
+  "devDependencies": {
+    "dotenv": "^16.4.7"
+  },
   "tsup": {
     "entry": [
       "src/index.ts"

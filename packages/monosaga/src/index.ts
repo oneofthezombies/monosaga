@@ -114,7 +114,7 @@ export async function test() {
       INSERT INTO _monosaga_sagas
         (id, idempotency_key)
       VALUES
-        (${uuid}, ${idempotencyKey});
+        (${uuid}::uuid, ${idempotencyKey}::uuid);
     `);
   });
 }

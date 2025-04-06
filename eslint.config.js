@@ -30,10 +30,5 @@ export default tseslint.config(
       throw new Error('Please set DATABASE_URL env.');
     })(),
     targets: [{ wrapper: 'client.query' }, { wrapper: 'tx.query' }],
-    overrides: {
-      types: {
-        uuid: 'string',
-      },
-    },
   }),
 );

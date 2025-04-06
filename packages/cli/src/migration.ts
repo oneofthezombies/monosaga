@@ -1,4 +1,5 @@
 import { Pool } from '@monosaga/pg';
+import { sql } from '@ts-safeql/sql-tag';
 import m0001Init from './migrations/0001-init';
 import { type Migration } from './utils';
 
@@ -23,30 +24,30 @@ export async function migrate(): Promise<void> {
 }
 
 async function migrateInternal(pool: Pool): Promise<void> {
-  await pool.transaction(async (sql) => {
-    await sql`
+  await pool.transaction(async (tx) => {
+    await tx.query(sql`
       CREATE TABLE IF NOT EXISTS _monosaga_migrations (
         id serial PRIMARY KEY,
         name text NOT NULL UNIQUE,
         executed_at timestamptz NOT NULL DEFAULT now()
       );
-    `;
-    const applieds = await sql`
+    `);
+    const applieds = await tx.query<{ name: string | null }>(sql`
       SELECT name FROM _monosaga_migrations;
-    `;
-    const appliedNameSet = new Set<string>(applieds.rows.map(r => r['name']));
+    `);
+    const appliedNameSet = new Set<string>(applieds.rows.map(r => r.name!));
     for (const migration of migrations) {
       if (appliedNameSet.has(migration.name)) {
         continue;
       }
 
-      await migration.up(sql);
-      await sql`
+      await migration.up(tx);
+      await tx.query(sql`
         INSERT INTO _monosaga_migrations
           (name)
         VALUES
           (${migration.name});
-      `;
+      `);
     }
   });
 }

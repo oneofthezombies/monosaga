@@ -31,5 +31,6 @@
     "strictPropertyInitialization": true,
     "target": "esnext",
     "verbatimModuleSyntax": true
-  }
+  },
+  "exclude": ["**/*/dist"]
 }

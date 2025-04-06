@@ -27,5 +27,28 @@ export default {
         updated_at timestamptz NOT NULL DEFAULT now()
       );
     `);
+    await tx.query(sql`
+      CREATE TYPE _monosaga_step_status AS ENUM (
+        'pending',
+        'processing',
+        'waiting_event',
+        'succeeded',
+        'failed',
+        'permanently_failed'
+      );
+    `);
+    await tx.query(sql`
+      CREATE TABLE _monosaga_steps (
+        id serial PRIMARY KEY,
+        saga_id uuid NOT NULL,
+        step_index integer NOT NULL,
+        input jsonb NOT NULL DEFAULT '{}'::jsonb,
+        output jsonb NOT NULL DEFAULT '{}'::jsonb,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now(),
+        
+        FOREIGN KEY (saga_id) REFERENCES _monosaga_sagas(id)
+      );
+    `);
   },
 } satisfies Migration;

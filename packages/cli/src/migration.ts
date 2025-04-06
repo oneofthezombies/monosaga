@@ -32,7 +32,7 @@ async function migrateInternal(pool: Pool): Promise<void> {
         executed_at timestamptz NOT NULL DEFAULT now()
       );
     `);
-    const applieds = await tx.query<{ name: string | null }>(sql`
+    const applieds = await tx.query<{ name: string }>(sql`
       SELECT name FROM _monosaga_migrations;
     `);
     const appliedNameSet = new Set<string>(applieds.rows.map(r => r.name!));

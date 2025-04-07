@@ -7,8 +7,8 @@
   "scripts": {
     "build": "turbo build",
     "build:dev": "turbo build:dev",
-    "sort-package-json": "sort-package-json package.json **/*/package.json",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "sort-package-json": "sort-package-json package.json **/*/package.json"
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",

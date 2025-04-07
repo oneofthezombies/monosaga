@@ -1,16 +1,23 @@
-import eslint from '@eslint/js';
-import stylistic from '@stylistic/eslint-plugin';
-import tseslint from 'typescript-eslint';
+import eslint from "@eslint/js";
+import safeql from "@ts-safeql/eslint-plugin/config";
+import "dotenv/config";
+import { globalIgnores } from "eslint/config";
+import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  stylistic.configs.customize({
-    indent: 2,
-    quotes: 'single',
-    semi: true,
+  globalIgnores(["**/dist/"]),
+  {
+    languageOptions: { globals: { process: true } },
+  },
+  safeql.configs.connections({
+    databaseUrl:
+      process.env["DATABASE_URL"] ??
+      (() => {
+        throw new Error("Please set DATABASE_URL env.");
+      })(),
+    targets: [{ wrapper: "client.query" }, { wrapper: "tx.query" }],
+    overrides: { types: { jsonb: "unknown" } },
   }),
   eslint.configs.recommended,
-  tseslint.configs.recommended,
-  {
-    ignores: ['**/*/dist/'],
-  },
+  tseslint.configs.recommended
 );

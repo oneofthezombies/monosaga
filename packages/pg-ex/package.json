@@ -1,5 +1,7 @@
 {
-  "name": "@monosaga/monosaga",
+  "name": "@monosaga/pg-ex",
+  "version": "0.0.0",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
@@ -18,11 +20,13 @@
     "build:dev": "tsup --format esm --sourcemap --onSuccess tsc"
   },
   "dependencies": {
-    "@monosaga/pg-ex": "*",
-    "@monosaga/utils": "*"
+    "@monosaga/utils": "*",
+    "@ts-safeql/sql-tag": "^0.2.1",
+    "camelcase-keys": "^9.1.3",
+    "pg": "^8.14.1"
   },
   "devDependencies": {
-    "dotenv": "^16.4.7"
+    "@types/pg": "^8.11.11"
   },
   "tsup": {
     "entry": [

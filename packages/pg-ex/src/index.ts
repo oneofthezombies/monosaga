@@ -7,7 +7,7 @@ import pg from "pg";
 
 export { camelcaseKeys, pg, sql, type CamelcaseKeysOptions };
 
-export function camel<
+export function toCamel<
   T extends Record<string, unknown> | ReadonlyArray<Record<string, unknown>>
 >(
   input: Parameters<typeof camelcaseKeys<T>>[0]

@@ -1,24 +1,24 @@
-import {
-  Pool, type pg, sql,
-} from '@monosaga/pg';
-import type { MaybePromise } from '@monosaga/utils';
-import 'dotenv/config';
-import { randomUUID } from 'node:crypto';
+import { pg, sql, transaction } from "@monosaga/pg-ex";
+import type { MaybePromise } from "@monosaga/utils";
+import "dotenv/config";
+import { randomUUID } from "node:crypto";
 
 export type SagaConfig = {
   name: string;
   steps: StepConfig[];
 };
 
-export type StepConfig = {
-  kind: 'in-tx';
-  onExecute: (c: OnExecuteInTxContext) => MaybePromise<StepOutput>;
-  onCompensate: (c: OnCompensateInTxContext) => MaybePromise<StepOutput>;
-} | {
-  kind: 'out-of-tx';
-  onExecute: (c: OnExecuteOutOfTxContext) => MaybePromise<StepOutput>;
-  onCompensate: (c: OnCompensateOutOfTxContext) => MaybePromise<StepOutput>;
-};
+export type StepConfig =
+  | {
+      kind: "in-tx";
+      onExecute: (c: OnExecuteInTxContext) => MaybePromise<StepOutput>;
+      onCompensate: (c: OnCompensateInTxContext) => MaybePromise<StepOutput>;
+    }
+  | {
+      kind: "out-of-tx";
+      onExecute: (c: OnExecuteOutOfTxContext) => MaybePromise<StepOutput>;
+      onCompensate: (c: OnCompensateOutOfTxContext) => MaybePromise<StepOutput>;
+    };
 
 export type OnExecuteInTxContext = {
   tx: pg.PoolClient;
@@ -48,19 +48,29 @@ test();
 
 export async function test() {
   const saga: SagaConfig = {
-    name: 'create-user',
+    name: "create-user",
     steps: [
       {
-        kind: 'out-of-tx',
+        kind: "out-of-tx",
         async onExecute(c) {
-          const emailEncrypted = Reflect.get(c.input, 'emailEncrypted') as string | undefined;
+          const emailEncrypted = Reflect.get(c.input, "emailEncrypted") as
+            | string
+            | undefined;
           if (!emailEncrypted) throw new Error();
-          const passwordHash = Reflect.get(c.input, 'passwordHash') as string | undefined;
+          const passwordHash = Reflect.get(c.input, "passwordHash") as
+            | string
+            | undefined;
           if (!passwordHash) throw new Error();
-          const idempotencyKey = Reflect.get(c.input, 'idempotencyKey') as string | undefined;
+          const idempotencyKey = Reflect.get(c.input, "idempotencyKey") as
+            | string
+            | undefined;
           if (!idempotencyKey) throw new Error();
-          console.log('call paddle customers create api', emailEncrypted, idempotencyKey);
-          const customer = { id: '<paddle-customer-id>' };
+          console.log(
+            "call paddle customers create api",
+            emailEncrypted,
+            idempotencyKey
+          );
+          const customer = { id: "<paddle-customer-id>" };
           return {
             emailEncrypted,
             passwordHash,
@@ -68,22 +78,30 @@ export async function test() {
           };
         },
         async onCompensate(c) {
-          const paddleCustomerId = Reflect.get(c.output, 'paddleCustomerId') as string | undefined;
+          const paddleCustomerId = Reflect.get(c.output, "paddleCustomerId") as
+            | string
+            | undefined;
           if (!paddleCustomerId) throw new Error();
-          console.log('call paddle customers update api', paddleCustomerId);
+          console.log("call paddle customers update api", paddleCustomerId);
           return {};
         },
       },
       {
-        kind: 'in-tx',
+        kind: "in-tx",
         async onExecute(c) {
-          const emailEncrypted = Reflect.get(c.input, 'emailEncrypted') as string | undefined;
+          const emailEncrypted = Reflect.get(c.input, "emailEncrypted") as
+            | string
+            | undefined;
           if (!emailEncrypted) throw new Error();
-          const passwordHash = Reflect.get(c.input, 'passwordHash') as string | undefined;
+          const passwordHash = Reflect.get(c.input, "passwordHash") as
+            | string
+            | undefined;
           if (!passwordHash) throw new Error();
-          const paddleCustomerId = Reflect.get(c.input, 'paddleCustomerId') as string | undefined;
+          const paddleCustomerId = Reflect.get(c.input, "paddleCustomerId") as
+            | string
+            | undefined;
           if (!paddleCustomerId) throw new Error();
-          const emailHash = '';
+          const emailHash = "";
           const result = await c.tx.query<{ id: number }>(sql`
             INSERT INTO users
               (email_encrypted, email_hash, password_hash)
@@ -93,7 +111,7 @@ export async function test() {
           return { userId: result.rows[0]?.id };
         },
         async onCompensate(c) {
-          const userId = Reflect.get(c.output, 'userId') as number | undefined;
+          const userId = Reflect.get(c.output, "userId") as number | undefined;
           if (!userId) throw Error();
           await c.tx.query(sql`
             DELETE FROM users WHERE id = ${userId};
@@ -104,8 +122,8 @@ export async function test() {
     ],
   };
 
-  const pool = new Pool({ connectionString: process.env['DATABASE_URL']! });
-  await pool.transaction(async (tx) => {
+  const pool = new pg.Pool({ connectionString: process.env["DATABASE_URL"]! });
+  await transaction(pool, async (tx) => {
     const uuid: string = randomUUID();
     const idempotencyKey: string = randomUUID();
     const saga = await tx.query<{
@@ -119,15 +137,15 @@ export async function test() {
       created_at: Date;
       updated_at: Date;
     }>(sql`
-      SELECT * FROM _monosaga_sagas WHERE idempotency_key = ${'a1acc725-46c8-411e-ab28-9b8781899331'}::uuid;
+      SELECT * FROM _monosaga_sagas WHERE idempotency_key = ${"a1acc725-46c8-411e-ab28-9b8781899331"}::uuid;
     `);
-    const saga2 = saga.rows.map(v => camelcaseKeys(v, { deep: true }))[0];
+    const saga2 = saga.rows.map((v) => camelcaseKeys(v, { deep: true }))[0];
     console.log(saga2);
     await tx.query(sql`
       INSERT INTO _monosaga_sagas
         (id, idempotency_key, step_name)
       VALUES
-        (${uuid}::uuid, ${idempotencyKey}::uuid, ${'test'});
+        (${uuid}::uuid, ${idempotencyKey}::uuid, ${"test"});
     `);
   });
 }

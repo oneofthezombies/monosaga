@@ -18,7 +18,7 @@
     "build:dev": "tsup --format esm --sourcemap --onSuccess tsc"
   },
   "dependencies": {
-    "@monosaga/pg": "*",
+    "@monosaga/pg-ex": "*",
     "@monosaga/utils": "*"
   },
   "devDependencies": {

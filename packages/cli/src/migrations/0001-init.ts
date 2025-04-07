@@ -1,8 +1,8 @@
-import { sql } from '@ts-safeql/sql-tag';
-import type { Migration } from '../utils';
+import { sql } from "@monosaga/pg-ex";
+import type { Migration } from "../utils";
 
 export default {
-  name: '0001-init',
+  name: "0001-init",
   up: async (tx) => {
     await tx.query(sql`
       CREATE TYPE _monosaga_saga_status AS ENUM (

@@ -10,7 +10,7 @@
     "build:dev": "tsup --format esm --sourcemap --onSuccess tsc"
   },
   "dependencies": {
-    "@monosaga/pg": "*",
+    "@monosaga/pg-ex": "*",
     "@monosaga/utils": "*",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7"

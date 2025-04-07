@@ -1,19 +1,16 @@
-import { Pool } from '@monosaga/pg';
-import { sql } from '@ts-safeql/sql-tag';
-import m0001Init from './migrations/0001-init';
-import { type Migration } from './utils';
+import { pg, sql, transaction } from "@monosaga/pg-ex";
+import m0001Init from "./migrations/0001-init";
+import { type Migration } from "./utils";
 
-const migrations: Migration[] = [
-  m0001Init,
-];
+const migrations: Migration[] = [m0001Init];
 
 export async function migrate(): Promise<void> {
-  const databaseUrl = process.env['DATABASE_URL'];
+  const databaseUrl = process.env["DATABASE_URL"];
   if (!databaseUrl) {
-    throw new Error('Please set DATABASE_URL environment variable.');
+    throw new Error("Please set DATABASE_URL environment variable.");
   }
 
-  const pool = new Pool({
+  const pool = new pg.Pool({
     connectionString: databaseUrl,
   });
   try {
@@ -23,8 +20,8 @@ export async function migrate(): Promise<void> {
   }
 }
 
-async function migrateInternal(pool: Pool): Promise<void> {
-  await pool.transaction(async (tx) => {
+async function migrateInternal(pool: pg.Pool): Promise<void> {
+  await transaction(pool, async (tx) => {
     await tx.query(sql`
       CREATE TABLE IF NOT EXISTS _monosaga_migrations (
         id serial PRIMARY KEY,
@@ -35,7 +32,7 @@ async function migrateInternal(pool: Pool): Promise<void> {
     const applieds = await tx.query<{ name: string }>(sql`
       SELECT name FROM _monosaga_migrations;
     `);
-    const appliedNameSet = new Set<string>(applieds.rows.map(r => r.name!));
+    const appliedNameSet = new Set<string>(applieds.rows.map((r) => r.name!));
     for (const migration of migrations) {
       if (appliedNameSet.has(migration.name)) {
         continue;

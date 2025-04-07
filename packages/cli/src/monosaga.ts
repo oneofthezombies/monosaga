@@ -2,8 +2,8 @@
 
 import { Command } from "commander";
 import "dotenv/config";
+import { version } from "../package.json";
 import { migrate } from "./migration";
-import version from "./version";
 
 async function main() {
   const program = new Command()

@@ -15,6 +15,7 @@
     "@types/node": "^22.14.0",
     "eslint": "^9.23.0",
     "libpg-query": "^16.3.0",
+    "patch-package": "^8.0.0",
     "sort-package-json": "^3.0.0",
     "tsup": "^8.4.0",
     "tsx": "^4.19.3",

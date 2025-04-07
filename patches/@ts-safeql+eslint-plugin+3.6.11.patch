@@ -1,0 +1,26 @@
+diff --git a/node_modules/@ts-safeql/eslint-plugin/dist/workers/check-sql.worker.cjs b/node_modules/@ts-safeql/eslint-plugin/dist/workers/check-sql.worker.cjs
+index fa8fb66..892aff4 100644
+--- a/node_modules/@ts-safeql/eslint-plugin/dist/workers/check-sql.worker.cjs
++++ b/node_modules/@ts-safeql/eslint-plugin/dist/workers/check-sql.worker.cjs
+@@ -1848,7 +1848,7 @@ function getResolvedTargetEntry(params) {
+     );
+     if (!pgType)
+       return void 0;
+-    if (params.context.overrides?.columns) {
++    if (params.context.overrides?.columns && params.context.overrides.columns.size > 0) {
+       const override2 = params.context.overrides.columns.get(params.col.introspected?.tableName ?? "")?.get(params.col.described.name);
+       return checkSql_utils.fmap(
+         override2,
+diff --git a/node_modules/@ts-safeql/eslint-plugin/dist/workers/check-sql.worker.mjs b/node_modules/@ts-safeql/eslint-plugin/dist/workers/check-sql.worker.mjs
+index a8076aa..0ec5027 100644
+--- a/node_modules/@ts-safeql/eslint-plugin/dist/workers/check-sql.worker.mjs
++++ b/node_modules/@ts-safeql/eslint-plugin/dist/workers/check-sql.worker.mjs
+@@ -1825,7 +1825,7 @@ function getResolvedTargetEntry(params) {
+     );
+     if (!pgType)
+       return void 0;
+-    if (params.context.overrides?.columns) {
++    if (params.context.overrides?.columns && params.context.overrides.columns.size > 0) {
+       const override2 = params.context.overrides.columns.get(params.col.introspected?.tableName ?? "")?.get(params.col.described.name);
+       return fmap(
+         override2,

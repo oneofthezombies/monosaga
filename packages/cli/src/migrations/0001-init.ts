@@ -18,11 +18,8 @@ export default {
       CREATE TABLE _monosaga_sagas (
         id uuid PRIMARY KEY,
         idempotency_key uuid NOT NULL UNIQUE,
-        input jsonb NOT NULL DEFAULT '{}'::jsonb,
-        output jsonb NOT NULL DEFAULT '{}'::jsonb,
-        step_index integer NOT NULL DEFAULT 0,
-        step_name text NOT NULL,
-        timeout_ms integer NOT NULL DEFAULT 5000,
+        input jsonb NOT NULL DEFAULT 'null'::jsonb,
+        output jsonb NOT NULL DEFAULT 'null'::jsonb,
         created_at timestamptz NOT NULL DEFAULT now(),
         updated_at timestamptz NOT NULL DEFAULT now()
       );

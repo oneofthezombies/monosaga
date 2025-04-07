@@ -7,6 +7,14 @@ import pg from "pg";
 
 export { camelcaseKeys, pg, sql, type CamelcaseKeysOptions };
 
+export function camel<
+  T extends Record<string, unknown> | ReadonlyArray<Record<string, unknown>>
+>(
+  input: Parameters<typeof camelcaseKeys<T>>[0]
+): ReturnType<typeof camelcaseKeys<T>> {
+  return camelcaseKeys<T>(input, { deep: true });
+}
+
 export async function transaction<T>(
   pool: pg.Pool,
   fn: (tx: pg.PoolClient) => MaybePromise<T>

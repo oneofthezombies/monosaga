@@ -1,11 +1,12 @@
 import eslint from "@eslint/js";
 import safeql from "@ts-safeql/eslint-plugin/config";
 import "dotenv/config";
+import { globalIgnores } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
+  globalIgnores(["**/dist/"]),
   {
-    ignores: ["**/dist/**/*"],
     languageOptions: { globals: { process: true } },
   },
   safeql.configs.connections({

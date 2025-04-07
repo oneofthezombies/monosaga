@@ -25,7 +25,7 @@ export default tseslint.config(
     rules: {
       '@stylistic/brace-style': ['error', '1tbs'],
       '@stylistic/max-len': ['error', {
-        code: 80,
+        code: 100,
         ignoreUrls: true,
         ignoreStrings: true,
         ignoreTemplateLiterals: true,

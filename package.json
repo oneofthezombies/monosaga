@@ -13,7 +13,6 @@
     "@eslint/js": "^9.23.0",
     "@stylistic/eslint-plugin": "^4.2.0",
     "@ts-safeql/eslint-plugin": "^3.6.11",
-    "@ts-safeql/sql-tag": "^0.2.1",
     "@types/node": "^22.14.0",
     "eslint": "^9.23.0",
     "libpg-query": "^16.3.0",

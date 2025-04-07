@@ -1,8 +1,7 @@
 import {
-  Pool, type pg,
+  Pool, type pg, sql,
 } from '@monosaga/pg';
 import type { MaybePromise } from '@monosaga/utils';
-import { sql } from '@ts-safeql/sql-tag';
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 
@@ -122,7 +121,7 @@ export async function test() {
     }>(sql`
       SELECT * FROM _monosaga_sagas WHERE idempotency_key = ${'a1acc725-46c8-411e-ab28-9b8781899331'}::uuid;
     `);
-    const saga2 = saga.rows[0];
+    const saga2 = saga.rows.map(v => camelcaseKeys(v, { deep: true }))[0];
     console.log(saga2);
     await tx.query(sql`
       INSERT INTO _monosaga_sagas

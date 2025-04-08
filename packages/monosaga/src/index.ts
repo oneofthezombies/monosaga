@@ -214,11 +214,11 @@ type StepCompensateFn<
 > = (c: StepCompensateContext<OutputT, InErrorT>) => OutErrorT;
 
 type Step<
-  KindT extends Kind = Kind,
-  InputT extends Input = Input,
-  OutputT extends Output = Output,
-  InErrorT extends InError = InError,
-  OutErrorT extends OutError = OutError
+  KindT extends Kind,
+  InputT extends Input,
+  OutputT extends Output,
+  InErrorT extends InError,
+  OutErrorT extends OutError
 > = {
   kind: KindT;
   name: string;
@@ -234,9 +234,9 @@ type TxStep<
 > = Step<"tx-step", InputT, OutputT, InErrorT, OutErrorT>;
 
 type TxStepChain<
-  TxStepsT extends readonly TxStep[] = [],
-  InputT extends Input = Input,
-  InErrorT extends InError = InError
+  TxStepsT extends readonly TxStep[],
+  InputT extends Input,
+  InErrorT extends InError
 > = TxStepsT extends [infer HeadT, ...infer TailsT extends readonly TxStep[]]
   ? HeadT extends TxStep<
       infer HeadInputT,
@@ -257,22 +257,18 @@ type TxStepsLastOutput<TxStepsT extends readonly TxStep[]> =
     ? LastOutputT
     : never;
 
-type TxStepsLastOutError<
-  TxSteps extends readonly TxStep<JsonValue, JsonValue, JsonValue, JsonValue>[]
-> = Last<TxSteps> extends TxStep<
-  JsonValue,
-  JsonValue,
-  JsonValue,
-  infer OutErrorT
->
-  ? OutErrorT
-  : never;
+type TxStepsLastOutError<TxStepsT extends readonly TxStep[]> =
+  Last<TxStepsT> extends TxStep<infer _, infer _, infer _, infer LastOutErrorT>
+    ? LastOutErrorT
+    : never;
 
 type TxStepSequence<
-  TxSteps extends readonly TxStep<JsonValue, JsonValue, JsonValue, JsonValue>[]
+  TxStepsT extends readonly TxStep[],
+  InputT extends Input,
+  InErrorT extends InError
 > = {
   kind: "tx-step-sequence";
-  steps: TxStepChain<TxSteps, JsonValue, JsonValue>;
+  steps: TxStepChain<TxStepsT, InputT, InErrorT>;
 };
 
 type ExStep<
@@ -283,51 +279,61 @@ type ExStep<
 > = Step<"ex-step", InputT, OutputT, InErrorT, OutErrorT>;
 
 type SagaStep<
-  Input extends JsonValue,
-  Output extends JsonValue,
-  InError extends JsonValue,
-  OutError extends JsonValue
-> = TxStepSequence<[]> | ExStep<Input, Output, InError, OutError>;
+  InputT extends Input = Input,
+  OutputT extends Output = Output,
+  InErrorT extends InError = InError,
+  OutErrorT extends OutError = OutError
+> =
+  | TxStepSequence<[], InputT, InErrorT>
+  | ExStep<InputT, OutputT, InErrorT, OutErrorT>;
 
-type SagaStepChain<
-  SagaSteps extends readonly SagaStep<
-    JsonValue,
-    JsonValue,
-    JsonValue,
-    JsonValue
-  >[],
-  Input extends JsonValue,
-  InError extends JsonValue
-> = SagaSteps extends [
-  infer HeadT,
-  ...infer TailsT extends readonly SagaStep<
-    JsonValue,
-    JsonValue,
-    JsonValue,
-    JsonValue
-  >[]
-]
-  ? HeadT extends TxStepSequence<infer TxStepsT>
-    ? Last<TxStepsT> extends TxStep<
+type SagaStepChainIfHeadTxStepSequence<
+  HeadT,
+  TailsT extends readonly SagaStep[],
+  InputT extends Input,
+  InErrorT extends InError
+> = HeadT extends TxStepSequence<infer HeadTxStepsT, infer _, infer _>
+  ? HeadTxStepsT extends TxStepChain<HeadTxStepsT, InputT, InErrorT>
+    ? Last<HeadTxStepsT> extends TxStep<
         infer _,
-        infer OutputT,
+        infer HeadLastOutputT,
         infer _,
-        infer OutErrorT
+        infer HeadLastOutErrorT
       >
-      ? [HeadT, ...SagaStepChain<TailsT, OutputT, OutErrorT>]
-      : never
-    : HeadT extends ExStep<
-        infer InputT,
-        infer OutputT,
-        infer InErrorT,
-        infer OutErrorT
-      >
-    ? InputT extends Input
-      ? InErrorT extends InError
-        ? [HeadT, ...SagaStepChain<TailsT, OutputT, OutErrorT>]
-        : never
+      ? [HeadT, ...SagaStepChain<TailsT, HeadLastOutputT, HeadLastOutErrorT>]
       : never
     : never
+  : never;
+
+type SagaStepChainIfHeadExStep<
+  HeadT,
+  TailsT extends readonly SagaStep[],
+  InputT extends Input,
+  InErrorT extends InError
+> = HeadT extends ExStep<
+  infer HeadInputT,
+  infer HeadOutputT,
+  infer HeadInErrorT,
+  infer HeadOutErrorT
+>
+  ? HeadInputT extends InputT
+    ? HeadInErrorT extends InErrorT
+      ? [HeadT, ...SagaStepChain<TailsT, HeadOutputT, HeadOutErrorT>]
+      : never
+    : never
+  : never;
+
+type SagaStepChain<
+  SagaStepsT extends readonly SagaStep[],
+  InputT extends Input,
+  InErrorT extends InError
+> = SagaStepsT extends [
+  infer HeadT,
+  ...infer TailsT extends readonly SagaStep[]
+]
+  ?
+      | SagaStepChainIfHeadExStep<HeadT, TailsT, InputT, InErrorT>
+      | SagaStepChainIfHeadTxStepSequence<HeadT, TailsT, InputT, InErrorT>
   : [];
 
 type Saga<

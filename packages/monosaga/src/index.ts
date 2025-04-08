@@ -227,6 +227,16 @@ type Step<
   compensate?: StepCompensateFn<OutputT, InErrorT, OutErrorT>;
 };
 
+type StepConfig<
+  InputT extends Input,
+  OutputT extends Output,
+  InErrorT extends InError,
+  OutErrorT extends OutError
+> = {
+  run: StepRunFn<InputT, OutputT>;
+  compensate?: StepCompensateFn<OutputT, InErrorT, OutErrorT>;
+};
+
 type TxStep<
   InputT extends Input = Input,
   OutputT extends Output = Output,
@@ -288,6 +298,19 @@ type SagaStep<
   | TxStepSequence<[], InputT, InErrorT>
   | ExStep<InputT, OutputT, InErrorT, OutErrorT>;
 
+type SagaStepChain<
+  SagaStepsT extends readonly SagaStep[],
+  InputT extends Input,
+  InErrorT extends InError
+> = SagaStepsT extends [
+  infer HeadT,
+  ...infer TailsT extends readonly SagaStep[]
+]
+  ?
+      | SagaStepChain_HeadExStep<HeadT, TailsT, InputT, InErrorT>
+      | SagaStepChain_HeadTxStepSequence<HeadT, TailsT, InputT, InErrorT>
+  : [];
+
 type SagaStepChain_HeadTxStepSequence<
   HeadT,
   TailsT extends readonly SagaStep[],
@@ -324,19 +347,6 @@ type SagaStepChain_HeadExStep<
     : never
   : never;
 
-type SagaStepChain<
-  SagaStepsT extends readonly SagaStep[],
-  InputT extends Input,
-  InErrorT extends InError
-> = SagaStepsT extends [
-  infer HeadT,
-  ...infer TailsT extends readonly SagaStep[]
-]
-  ?
-      | SagaStepChain_HeadExStep<HeadT, TailsT, InputT, InErrorT>
-      | SagaStepChain_HeadTxStepSequence<HeadT, TailsT, InputT, InErrorT>
-  : [];
-
 type Saga<
   NameT extends Name,
   InputT extends Input,
@@ -351,90 +361,110 @@ type Saga<
   steps: SagaStepChain<SagaStepsT, InputT, InErrorT>;
 };
 
-type SagaBuilder_TxFn_BuildFn_StepFn = <
-  InputT extends JsonValue,
-  OutputT extends JsonValue,
-  InErrorT extends JsonValue,
-  OutErrorT extends JsonValue
->(
-  name: string,
-  config: { dummy: number }
-) => TxStep<InputT, OutputT, InErrorT, OutErrorT>;
-
-type SagaBuilder_TxFn_BuildFn = (
-  step: SagaBuilder_TxFn_BuildFn_StepFn
-) => NewTxStepsT;
-
-type SagaBuilder_TxFn<
-  NameT extends Name,
-  InputT extends Input,
-  InErrorT extends InError,
-  SagaStepsT extends readonly SagaStep[]
-> = <NewTxStepsT extends readonly TxStep[]>(
-  build: SagaBuilder_TxFn_BuildFn
-) => SagaBuilder<
-  NameT,
-  InputT,
-  TxStepsLastOutput<NewTxStepsT>,
-  TxStepsLastOutError<NewTxStepsT>,
-  [...SagaStepsT, TxStepSequence<NewTxStepsT, InputT, InErrorT>]
->;
-
 type SagaBuilder<
   NameT extends Name,
   InputT extends Input,
   OutputT extends Output,
   InErrorT extends InError,
+  OutErrorT extends OutError,
   SagaStepsT extends readonly SagaStep[]
 > = {
-  tx: SagaBuilder_TxFn<NameT, InputT, InErrorT, SagaStepsT>;
-
-  step: <OutputT extends JsonValue, OutErrorT extends JsonValue>(
-    name: string,
-    config: { dummy: number }
-  ) => SagaBuilder<
-    Name,
-    Input,
+  tx: SagaBuilder_TxFn<NameT, InputT, OutputT, InErrorT, SagaStepsT>;
+  step: SagaBuilder_StepFn<
+    NameT,
+    InputT,
     OutputT,
+    InErrorT,
     OutErrorT,
-    [...SagaSteps, ExStep<Output, OutputT, Error, OutErrorT>] &
-      readonly SagaStep<JsonValue, JsonValue, JsonValue, JsonValue>[]
+    SagaStepsT
   >;
-
-  build: () => Saga<Name, Input, Output, Error, SagaSteps>;
+  build: () => Saga<NameT, InputT, OutputT, InErrorT, SagaStepsT>;
 };
 
-type MonoBuilder<
-  SagaMap extends Record<
-    string,
-    Saga<
-      string,
-      JsonValue,
-      JsonValue,
-      JsonValue,
-      SagaStep<JsonValue, JsonValue, JsonValue, JsonValue>[]
-    >
-  >
-> = {
-  saga: <
-    NameT extends string,
-    InputT extends JsonValue,
-    NewSaga extends Saga<
-      NameT,
-      InputT,
-      JsonValue,
-      JsonValue,
-      SagaStep<JsonValue, JsonValue, JsonValue, JsonValue>[]
-    >
-  >(
-    name: NameT extends keyof SagaMap ? never : NameT,
-    build: (s: SagaBuilder<NameT, InputT, InputT, JsonValue, []>) => NewSaga
-  ) => MonoBuilder<SagaMap & { [K in NameT]: NewSaga }>;
+type SagaBuilder_TxFn<
+  NameT extends Name,
+  InputT extends Input,
+  OutputT extends Output,
+  InErrorT extends InError,
+  SagaStepsT extends readonly SagaStep[]
+> = <NewTxStepsT extends readonly TxStep[]>(
+  build: SagaBuilder_TxFn_BuildFn<NewTxStepsT>
+) => SagaBuilder<
+  NameT,
+  InputT,
+  OutputT,
+  TxStepsLastOutput<NewTxStepsT>,
+  TxStepsLastOutError<NewTxStepsT>,
+  [...SagaStepsT, TxStepSequence<NewTxStepsT, InputT, InErrorT>]
+>;
 
-  build: () => {
-    sagaMap: SagaMap;
-    get: <NameT extends keyof SagaMap>(name: NameT) => SagaMap[NameT];
-  };
+type SagaBuilder_TxFn_BuildFn<NewTxStepsT extends readonly TxStep[]> = (
+  step: SagaBuilder_TxFn_BuildFn_StepFn
+) => NewTxStepsT;
+
+type SagaBuilder_TxFn_BuildFn_StepFn = <
+  InputT extends Input,
+  OutputT extends Output,
+  InErrorT extends InError,
+  OutErrorT extends OutError
+>(
+  name: Name,
+  config: StepConfig<InputT, OutputT, InErrorT, OutErrorT>
+) => TxStep<InputT, OutputT, InErrorT, OutErrorT>;
+
+type SagaBuilder_StepFn<
+  NameT extends Name,
+  InputT extends Input,
+  OutputT extends Output,
+  InErrorT extends InError,
+  OutErrorT extends OutError,
+  SagaStepsT extends readonly SagaStep[]
+> = (
+  name: Name,
+  config: StepConfig<OutputT, Output, InErrorT, OutError>
+) => SagaBuilder<
+  NameT,
+  InputT,
+  Output,
+  InErrorT,
+  OutError,
+  [...SagaStepsT, ExStep<OutputT, Output, InErrorT, OutError>]
+>;
+
+// === MonoBuilder ===
+type MonoSagaMap = Record<Name, Saga<Name, Input, Output, InError, SagaStep[]>>;
+
+type MonoBuilderSagaFn<SagaMap extends MonoSagaMap> = <
+  NameT extends string,
+  InputT extends JsonValue,
+  NewSaga extends Saga<
+    NameT,
+    InputT,
+    JsonValue,
+    JsonValue,
+    SagaStep<JsonValue, JsonValue, JsonValue, JsonValue>[]
+  >
+>(
+  name: NameT extends keyof SagaMap ? never : NameT,
+  build: SagaBuilderFn<NameT, InputT, NewSaga>
+) => MonoBuilder<SagaMap & { [K in NameT]: NewSaga }>;
+
+type MonoBuilder<SagaMap extends MonoSagaMap> = {
+  saga: MonoBuilderSagaFn<SagaMap>;
+  build: () => MonoBuildResult<SagaMap>;
+};
+
+type SagaBuilderFn<
+  NameT extends string,
+  InputT extends JsonValue,
+  NewSaga extends Saga<NameT, InputT, JsonValue, JsonValue, SagaStep[]>
+> = (
+  s: SagaBuilder<NameT, InputT, InputT, JsonValue, JsonValue, []>
+) => NewSaga;
+
+type MonoBuildResult<SagaMap extends MonoSagaMap> = {
+  sagaMap: SagaMap;
+  get: <NameT extends keyof SagaMap>(name: NameT) => SagaMap[NameT];
 };
 
 type DefineMono = () => MonoBuilder<{}>;
@@ -443,6 +473,31 @@ const defineMono: DefineMono = () => {
   throw new Error();
 };
 
-defineMono().saga("createUser", (s) => {
-  s.tx((d) => {});
-});
+const a = defineMono().saga("createUser", (s) =>
+  s
+    .tx((step) => [
+      step("a", {
+        run: (c) => {
+          return {
+            a: 1,
+          };
+        },
+      }),
+    ])
+    .step("b", {
+      run: (c) => {
+        const input = c.input;
+        return {
+          b: 1,
+        };
+      },
+      compensate: (c) => {
+        const output = c.output;
+        const error = c.error;
+        return {
+          c: 1,
+        };
+      },
+    })
+    .build()
+);

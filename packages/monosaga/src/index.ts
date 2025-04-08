@@ -1,5 +1,5 @@
 import { pg, sql, transaction } from "@monosaga/pg-ex";
-import type { MaybePromise } from "@monosaga/utils";
+import { throws, type MaybePromise } from "@monosaga/utils";
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 
@@ -97,8 +97,13 @@ export class SagaService {
 //   }
 // }
 
+type SagaRegistry = {
+  get: (sagaName: string) => Saga | null;
+  add: (saga: Saga) => void;
+};
+
 type SagaOptions = {
-  timeoutMs: number;
+  registry?: SagaRegistry;
 };
 
 type SagaConfig = {
@@ -121,7 +126,7 @@ function defineSaga(
 function defineSaga(name: string, ...steps: SagaStep[]): Saga;
 function defineSaga(config: SagaConfig): Saga;
 function defineSaga(...args: unknown[]): Saga {
-  const nameOrConfig = args[0];
+  const nameOrConfig = args[0] ?? throws(new Error());
   const isConfig = !!nameOrConfig && typeof nameOrConfig === "object";
   if (isConfig) {
     return defineSagaWithConfig(nameOrConfig as SagaConfig);
@@ -206,10 +211,6 @@ function defineExStep(name: string, config: ExStepConfig): ExStep {
     ...config,
   };
 }
-
-const validateEmail = defineTxStep("validateEmail", {
-  run: () => console.log("Validate the email."),
-});
 
 const createPaddleCustomer = defineExStep("createPaddleCustomer", {
   run: () => console.log("Create a Paddle Customer."),

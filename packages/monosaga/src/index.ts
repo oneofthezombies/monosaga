@@ -189,65 +189,73 @@ import type { JsonValue, Last } from "@monosaga/utils";
 //   .saga("createUser", tx(validateUser), createPaddleCustomer, tx(createUser))
 //   .saga(/* ... */);
 
+type Kind = string;
+type Input = JsonValue;
+type Output = JsonValue;
+type InError = JsonValue;
+type OutError = JsonValue;
+
+type StepRunContext<InputT extends Input = Input> = { input: InputT };
+
+type StepRunFn<
+  InputT extends Input = Input,
+  OutputT extends Output = Output
+> = (c: StepRunContext<InputT>) => OutputT;
+
+type StepCompensateContext<
+  OutputT extends Output = Output,
+  InErrorT extends InError = InError
+> = { output: OutputT; error: InErrorT };
+
+type StepCompensateFn<
+  OutputT extends Output = Output,
+  InErrorT extends InError = InError,
+  OutErrorT extends OutError = OutError
+> = (c: StepCompensateContext<OutputT, InErrorT>) => OutErrorT;
+
 type Step<
-  Kind extends string,
-  Input extends JsonValue,
-  Output extends JsonValue,
-  InError extends JsonValue,
-  OutError extends JsonValue
+  KindT extends Kind = Kind,
+  InputT extends Input = Input,
+  OutputT extends Output = Output,
+  InErrorT extends InError = InError,
+  OutErrorT extends OutError = OutError
 > = {
-  kind: Kind;
+  kind: KindT;
   name: string;
-  run: (c: { input: Input }) => Output;
-  compensate?: (c: { output: Output; error: InError }) => OutError;
+  run: StepRunFn<InputT, OutputT>;
+  compensate?: StepCompensateFn<OutputT, InErrorT, OutErrorT>;
 };
 
 type TxStep<
-  Input extends JsonValue,
-  Output extends JsonValue,
-  InError extends JsonValue,
-  OutError extends JsonValue
-> = Step<"tx-step", Input, Output, InError, OutError>;
-
-type ExStep<
-  Input extends JsonValue,
-  Output extends JsonValue,
-  InError extends JsonValue,
-  OutError extends JsonValue
-> = Step<"ex-step", Input, Output, InError, OutError>;
+  InputT extends Input = Input,
+  OutputT extends Output = Output,
+  InErrorT extends InError = InError,
+  OutErrorT extends OutError = OutError
+> = Step<"tx-step", InputT, OutputT, InErrorT, OutErrorT>;
 
 type TxStepChain<
-  TxSteps extends readonly TxStep<JsonValue, JsonValue, JsonValue, JsonValue>[],
-  Input extends JsonValue,
-  InError extends JsonValue
-> = TxSteps extends [
-  infer HeadT,
-  ...infer TailsT extends readonly TxStep<
-    JsonValue,
-    JsonValue,
-    JsonValue,
-    JsonValue
-  >[]
-]
+  TxStepsT extends readonly TxStep[] = [],
+  InputT extends Input = Input,
+  InErrorT extends InError = InError
+> = TxStepsT extends [infer HeadT, ...infer TailsT extends readonly TxStep[]]
   ? HeadT extends TxStep<
-      infer InputT,
-      infer OutputT,
-      infer InErrorT,
-      infer OutErrorT
+      infer HeadInputT,
+      infer HeadOutputT,
+      infer HeadInErrorT,
+      infer HeadOutErrorT
     >
-    ? InputT extends Input
-      ? InErrorT extends InError
-        ? [HeadT, ...TxStepChain<TailsT, OutputT, OutErrorT>]
+    ? HeadInputT extends InputT
+      ? HeadInErrorT extends InErrorT
+        ? [HeadT, ...TxStepChain<TailsT, HeadOutputT, HeadOutErrorT>]
         : never
       : never
     : never
   : [];
 
-type TxStepsLastOutput<
-  TxSteps extends readonly TxStep<JsonValue, JsonValue, JsonValue, JsonValue>[]
-> = Last<TxSteps> extends TxStep<JsonValue, JsonValue, infer OutputT, JsonValue>
-  ? OutputT
-  : never;
+type TxStepsLastOutput<TxStepsT extends readonly TxStep[]> =
+  Last<TxStepsT> extends TxStep<infer _, infer _, infer LastOutputT>
+    ? LastOutputT
+    : never;
 
 type TxStepsLastOutError<
   TxSteps extends readonly TxStep<JsonValue, JsonValue, JsonValue, JsonValue>[]
@@ -266,6 +274,13 @@ type TxStepSequence<
   kind: "tx-step-sequence";
   steps: TxStepChain<TxSteps, JsonValue, JsonValue>;
 };
+
+type ExStep<
+  InputT extends Input = Input,
+  OutputT extends Output = Output,
+  InErrorT extends InError = InError,
+  OutErrorT extends OutError = OutError
+> = Step<"ex-step", InputT, OutputT, InErrorT, OutErrorT>;
 
 type SagaStep<
   Input extends JsonValue,

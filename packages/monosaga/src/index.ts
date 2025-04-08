@@ -190,6 +190,7 @@ import type { JsonValue, Last } from "@monosaga/utils";
 //   .saga(/* ... */);
 
 type Kind = string;
+type Name = string;
 type Input = JsonValue;
 type Output = JsonValue;
 type InError = JsonValue;
@@ -287,7 +288,7 @@ type SagaStep<
   | TxStepSequence<[], InputT, InErrorT>
   | ExStep<InputT, OutputT, InErrorT, OutErrorT>;
 
-type SagaStepChainIfHeadTxStepSequence<
+type SagaStepChain_HeadTxStepSequence<
   HeadT,
   TailsT extends readonly SagaStep[],
   InputT extends Input,
@@ -305,7 +306,7 @@ type SagaStepChainIfHeadTxStepSequence<
     : never
   : never;
 
-type SagaStepChainIfHeadExStep<
+type SagaStepChain_HeadExStep<
   HeadT,
   TailsT extends readonly SagaStep[],
   InputT extends Input,
@@ -332,62 +333,61 @@ type SagaStepChain<
   ...infer TailsT extends readonly SagaStep[]
 ]
   ?
-      | SagaStepChainIfHeadExStep<HeadT, TailsT, InputT, InErrorT>
-      | SagaStepChainIfHeadTxStepSequence<HeadT, TailsT, InputT, InErrorT>
+      | SagaStepChain_HeadExStep<HeadT, TailsT, InputT, InErrorT>
+      | SagaStepChain_HeadTxStepSequence<HeadT, TailsT, InputT, InErrorT>
   : [];
 
 type Saga<
-  Name extends string,
-  Input extends JsonValue,
-  Output extends JsonValue,
-  InError extends JsonValue,
-  SagaSteps extends readonly SagaStep<
-    JsonValue,
-    JsonValue,
-    JsonValue,
-    JsonValue
-  >[]
+  NameT extends Name,
+  InputT extends Input,
+  OutputT extends Output,
+  InErrorT extends InError,
+  SagaStepsT extends readonly SagaStep[]
 > = {
-  name: Name;
-  input: Input;
-  output: Output;
-  error: InError;
-  steps: SagaStepChain<SagaSteps, Input, InError>;
+  name: NameT;
+  input: InputT;
+  output: OutputT;
+  error: InErrorT;
+  steps: SagaStepChain<SagaStepsT, InputT, InErrorT>;
 };
 
+type SagaBuilder_TxFn_BuildFn_StepFn = <
+  InputT extends JsonValue,
+  OutputT extends JsonValue,
+  InErrorT extends JsonValue,
+  OutErrorT extends JsonValue
+>(
+  name: string,
+  config: { dummy: number }
+) => TxStep<InputT, OutputT, InErrorT, OutErrorT>;
+
+type SagaBuilder_TxFn_BuildFn = (
+  step: SagaBuilder_TxFn_BuildFn_StepFn
+) => NewTxStepsT;
+
+type SagaBuilder_TxFn<
+  NameT extends Name,
+  InputT extends Input,
+  InErrorT extends InError,
+  SagaStepsT extends readonly SagaStep[]
+> = <NewTxStepsT extends readonly TxStep[]>(
+  build: SagaBuilder_TxFn_BuildFn
+) => SagaBuilder<
+  NameT,
+  InputT,
+  TxStepsLastOutput<NewTxStepsT>,
+  TxStepsLastOutError<NewTxStepsT>,
+  [...SagaStepsT, TxStepSequence<NewTxStepsT, InputT, InErrorT>]
+>;
+
 type SagaBuilder<
-  Name extends string,
-  Input extends JsonValue,
-  Output extends JsonValue,
-  Error extends JsonValue,
-  SagaSteps extends readonly SagaStep<
-    JsonValue,
-    JsonValue,
-    JsonValue,
-    JsonValue
-  >[]
+  NameT extends Name,
+  InputT extends Input,
+  OutputT extends Output,
+  InErrorT extends InError,
+  SagaStepsT extends readonly SagaStep[]
 > = {
-  tx: <
-    NewTxStepsT extends TxStep<JsonValue, JsonValue, JsonValue, JsonValue>[]
-  >(
-    build: (
-      step: <
-        InputT extends JsonValue,
-        OutputT extends JsonValue,
-        InErrorT extends JsonValue,
-        OutErrorT extends JsonValue
-      >(
-        name: string,
-        config: { dummy: number }
-      ) => TxStep<InputT, OutputT, InErrorT, OutErrorT>
-    ) => NewTxStepsT
-  ) => SagaBuilder<
-    Name,
-    Input,
-    TxStepsLastOutput<NewTxStepsT>,
-    TxStepsLastOutError<NewTxStepsT>,
-    [...SagaSteps, TxStepSequence<NewTxStepsT>]
-  >;
+  tx: SagaBuilder_TxFn<NameT, InputT, InErrorT, SagaStepsT>;
 
   step: <OutputT extends JsonValue, OutErrorT extends JsonValue>(
     name: string,

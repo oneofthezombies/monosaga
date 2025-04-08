@@ -417,3 +417,11 @@ type MonoBuilder<
 };
 
 type DefineMono = () => MonoBuilder<{}>;
+
+const defineMono: DefineMono = () => {
+  throw new Error();
+};
+
+defineMono().saga("createUser", (s) => {
+  s.tx((d) => {});
+});

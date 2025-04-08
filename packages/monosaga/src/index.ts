@@ -98,7 +98,7 @@ export class SagaService {
 // }
 
 type SagaOptions = {
-  a: number;
+  timeoutMs: number;
 };
 
 type SagaConfig = {
@@ -107,9 +107,9 @@ type SagaConfig = {
   steps: SagaStep[];
 };
 
-type Activity = { kind: "activity" };
+type ExStep = { kind: "ex-step"; name: string } & ExStepConfig;
 
-type SagaStep = TxActivities | Activity;
+type SagaStep = TxStepSequence | ExStep;
 
 type Saga = { kind: "saga" } & SagaConfig;
 
@@ -122,93 +122,133 @@ function defineSaga(name: string, ...steps: SagaStep[]): Saga;
 function defineSaga(config: SagaConfig): Saga;
 function defineSaga(...args: unknown[]): Saga {
   const nameOrConfig = args[0];
-  if (nameOrConfig) {
-    if (typeof nameOrConfig === "object") {
-      const config = nameOrConfig as SagaConfig;
-      return {
-        ...config,
-        kind: "saga",
-      };
-    } else if (typeof nameOrConfig === "string") {
-      const name = nameOrConfig as string;
-      const optionsOrSteps = args[1];
-      if (optionsOrSteps) {
-        if (typeof optionsOrSteps === "object") {
-          const steps = args[2];
-          if (Array.isArray(steps)) {
-            return {
-              kind: "saga",
-              name,
-              options: optionsOrSteps as SagaOptions,
-              steps: steps as SagaStep[],
-            };
-          } else {
-            throw new Error();
-          }
-        } else if (Array.isArray(optionsOrSteps)) {
-          return {
-            kind: "saga",
-            name,
-            options: { a: 1 },
-            steps: optionsOrSteps as SagaStep[],
-          };
-        } else {
-          throw new Error();
-        }
-      } else {
-        throw new Error();
-      }
-    } else {
-      throw new Error();
-    }
-  } else {
-    throw new Error();
+  const isConfig = !!nameOrConfig && typeof nameOrConfig === "object";
+  if (isConfig) {
+    return defineSagaWithConfig(nameOrConfig as SagaConfig);
   }
+
+  const name = nameOrConfig as string;
+  const optionsOrStep = args[1];
+  if (optionsOrStep) {
+    const isOptions =
+      typeof optionsOrStep === "object" && !("kind" in optionsOrStep);
+    if (isOptions) {
+      return defineSagaWithConfig({
+        name,
+        options: optionsOrStep as SagaOptions,
+        steps: args.slice(2) as SagaStep[],
+      });
+    } else {
+      return defineSagaWithConfig({
+        name,
+        options: { timeoutMs: 0 },
+        steps: args.slice(1) as SagaStep[],
+      });
+    }
+  }
+
+  throw new Error("Unexpected saga arguments.");
 }
 
-type TxActivity = {
-  kind: "tx-activity";
+function defineSagaWithConfig(config: SagaConfig): Saga {
+  if (config.steps.length === 0) {
+    throw new Error("There must be at least one Saga step.");
+  }
+  return {
+    kind: "saga",
+    ...config,
+  };
+}
+
+type TxStep = {
+  kind: "tx-step";
+  name: string;
+} & TxStepConfig;
+
+function tx(...steps: TxStep[]): TxStepSequence {
+  return {
+    kind: "tx-step-sequence",
+    steps,
+  };
+}
+
+type TxStepSequence = {
+  kind: "tx-step-sequence";
+  steps: TxStep[];
 };
 
-function tx(...steps: TxActivity[]): TxActivities {
-  throw new Error(`${steps}`);
+type TxStepContext = { dummy: number };
+
+type TxStepConfig = {
+  run: (c: TxStepContext) => void;
+  compensate?: (c: TxStepContext) => void;
+};
+
+function defineTxStep(name: string, config: TxStepConfig): TxStep {
+  return {
+    kind: "tx-step",
+    name,
+    ...config,
+  };
 }
 
-type TxActivities = { kind: "tx-activities" };
+type ExStepContext = { dummy: number };
 
-function defineTxActivity(
-  name: string,
-  config: { run: () => void; compensate: () => void }
-): TxActivity {
-  throw new Error(`${name}${config}`);
+type ExStepConfig = {
+  run: (c: ExStepContext) => void;
+  compensate?: (c: ExStepContext) => void;
+};
+
+function defineExStep(name: string, config: ExStepConfig): ExStep {
+  return {
+    kind: "ex-step",
+    name,
+    ...config,
+  };
 }
 
-function defineActivity(
-  name: string,
-  config: { run: () => void; compensate: () => void }
-): Activity {
-  throw new Error(`${name}${config}`);
-}
-
-const validateEmail = defineTxActivity("validateEmail", {
-  run: () => {},
-  compensate: () => {},
+const validateEmail = defineTxStep("validateEmail", {
+  run: () => console.log("Validate the email."),
 });
 
-const createPaddleCustomer = defineActivity("createPaddleCustomer", {
-  run: () => {},
-  compensate: () => {},
+const createPaddleCustomer = defineExStep("createPaddleCustomer", {
+  run: () => console.log("Create a Paddle Customer."),
+  compensate: () => console.log("Delete the Paddle Customer."),
 });
 
-const createUser = defineTxActivity("createUser", {
-  run: () => {},
-  compensate: () => {},
+const createUser = defineTxStep("createUser", {
+  run: () => console.log("Create a user."),
+  compensate: () => console.log("Delete the user."),
 });
 
-const a = defineSaga(
+const saga = defineSaga(
   "createUser",
   tx(validateEmail),
   createPaddleCustomer,
   tx(createUser)
 );
-console.log(a);
+console.log(saga);
+
+for (const step of saga.steps) {
+  if (step.kind === "tx-step-sequence") {
+    console.log("Begin db transaction.");
+    for (const txStep of step.steps) {
+      console.log(`TxStep ${txStep.name} started.`);
+      try {
+        txStep.run({ dummy: 0 });
+        console.log(`TxStep ${txStep.name} succeeded.`);
+      } catch (e) {
+        console.log(`TxStep ${txStep} failed.`, e);
+      }
+    }
+    console.log("Commit db transaction.");
+  } else {
+    console.log(`ExStep ${step.name} started.`);
+    try {
+      step.run({ dummy: 0 });
+      console.log(`ExStep ${step.name} succeeded.`);
+    } catch (e) {
+      console.log(`ExStep ${step.name} failed.`, e);
+    }
+  }
+}
